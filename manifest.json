@@ -1,0 +1,15 @@
+{
+  "short_name": "LoveTree",
+  "name": "Для тебе з коханням",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/833/833472.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "theme_color": "#f28482",
+  "background_color": "#fdf8f5"
+}
