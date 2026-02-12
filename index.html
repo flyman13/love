@@ -193,44 +193,68 @@
 
         function growHearts() {
             const container = document.getElementById('heart-container');
-            const warmColors = [
-                '#FF0000', '#FF4500', '#FF8C00', '#FFA500', 
-                '#FFD700', '#D80000', '#FF2400', '#E25822', '#B91D1D'
-            ];
-            
-            for (let i = 0; i < 800; i++) {
+            const svg = document.getElementById('tree-svg');
+            // Палітра: червоний, помаранчевий, жовтий, золотий
+            const warmColors = ['#FF0000', '#FF4500', '#FF8C00', '#FFA500', '#FFD700', '#D80000', '#E25822', '#B91D1D'];
+            const totalHearts = 250;
+
+            // Отримуємо розміри контейнера, щоб правильно мапити нормалізовані координати
+            const rect = container.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2 - 10; // трохи підняти центр для кращої композиції
+            // масштаб залежить від розміру контейнера
+            const scale = Math.min(rect.width, rect.height) * 0.38;
+
+            // Функція перевірки точки всередині серця (імпліцитне рівняння серця)
+            // (x^2 + y^2 -1)^3 - x^2 y^3 <= 0  => всередині серця
+            function isInsideHeart(nx, ny) {
+                // nx,ny очікуються в діапазоні приблизно [-1.5, 1.5]
+                const x = nx;
+                const y = ny;
+                const a = x * x + y * y - 1;
+                return (a * a * a - x * x * y * y * y) <= 0;
+            }
+
+            // Створюємо задану кількість сердечок за допомогою rejection sampling
+            for (let i = 0; i < totalHearts; i++) {
                 setTimeout(() => {
-                    // Використовуємо квадратний корінь для рівномірного розподілу площі
-                    const t = Math.random() * Math.PI * 2;
-                    const r = Math.sqrt(Math.random()); // Магія рівномірності тут
-                    
-                    // Параметрична формула серця
-                    const x = 16 * Math.pow(Math.sin(t), 3);
-                    const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
-                    
-                    // Множимо на r, щоб заповнити середину без перенасичення центру
-                    const finalScale = 5.8 * r; 
-                    const posX = 154 + x * finalScale; 
-                    const posY = 120 + y * finalScale;
+                    // Шукаємо випадкову точку всередині серця
+                    let nx, ny;
+                    let tries = 0;
+                    do {
+                        // пробуємо з боксом [-1.3, 1.3]
+                        nx = (Math.random() * 2.6) - 1.3;
+                        ny = (Math.random() * 2.6) - 1.3;
+                        tries++;
+                        // safety: якщо дуже довго не вдається — розширимо діапазон
+                        if (tries > 50) break;
+                    } while (!isInsideHeart(nx, ny));
+
+                    // Мапимо нормалізовані координати до пікселів контейнера
+                    const posX = centerX + nx * scale;
+                    const posY = centerY - ny * scale; // інвертуємо Y
 
                     const h = document.createElement('div');
                     h.className = 'heart-leaf';
-                    
+
                     const color = warmColors[Math.floor(Math.random() * warmColors.length)];
+                    const rotation = (Math.random() * 60) - 30; // невеликий нахил
+
                     h.innerHTML = `
-                        <svg width="100%" height="100%" viewBox="0 0 32 32">
+                        <svg width="100%" height="100%" viewBox="0 0 32 32" style="transform: rotate(${rotation}deg)">
                             <path fill="${color}" d="M16,28.261c0,0-14-7.926-14-17.046c0-9.356,13.159-10.399,14,0.454
                             c0.841-10.853,14-9.81,14-0.454C30,20.335,16,28.261,16,28.261z"/>
                         </svg>
                     `;
 
-                    const size = Math.random() * 6 + 10;
+                    // Розмір: варіюємо, але трохи більші
+                    const size = Math.random() * 10 + 10;
                     h.style.width = size + 'px';
                     h.style.height = size + 'px';
-                    h.style.left = posX + 'px';
-                    h.style.top = posY + 'px';
-                    h.style.filter = "drop-shadow(0px 0px 1px rgba(0,0,0,0.1))";
-                    
+                    h.style.left = (posX - size / 2) + 'px';
+                    h.style.top = (posY - size / 2) + 'px';
+                    h.style.willChange = 'transform, opacity, left, top';
+
                     container.appendChild(h);
                 }, i * 12);
             }
