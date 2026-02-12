@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Для тебе ❤️</title>
+    <style>
+        :root {
+            --bg: #fdf8f5;
+            --env-color: #f28482;
+            --env-dark: #e56b6f;
+            --accent: #e63946;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            font-family: 'Georgia', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .envelope-container {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            cursor: pointer;
+            perspective: 1000px;
+        }
+
+        .envelope {
+            position: relative;
+            width: 100%; height: 100%;
+            background: var(--env-color);
+            border-radius: 0 0 10px 10px;
+            z-index: 3;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .envelope::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 5;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-top: 110px solid var(--env-dark);
+            transform-origin: top;
+            transition: transform 0.6s ease;
+        }
+
+        .open .envelope::before { transform: rotateX(180deg); z-index: 1; }
+
+        .card {
+            position: absolute;
+            top: 10px; left: 10px;
+            width: 280px; height: 180px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 2;
+            transition: all 1s ease-in-out;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .open .card {
+            z-index: 10;
+            width: 360px;
+            height: 640px;
+            left: -30px;
+            transform: translateY(-110px); 
+        }
+
+        .card-content { opacity: 0; transition: opacity 0.5s 1s; width: 100%; }
+        .open .card-content { opacity: 1; }
+
+        .line { font-size: 14px; margin-bottom: 5px; opacity: 0; color: #444; }
+        .animate-text { opacity: 1; transform: translateY(0); transition: 0.8s; }
+
+        #tree-svg {
+            width: 280px;
+            height: 280px;
+            margin-top: 10px;
+        }
+
+        .branch {
+            fill: none;
+            stroke: #5d4037;
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+        }
+
+        .open .branch {
+            animation: draw 2s forwards ease-in-out;
+        }
+
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+
+        .heart-leaf {
+            position: absolute;
+            font-size: 12px;
+            animation: grow 0.5s ease-out forwards;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes grow { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .timer-display {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #000;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .heart-seal {
+            position: absolute;
+            top: 40%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 6;
+            font-size: 40px;
+            transition: 0.3s;
+        }
+        .open .heart-seal { opacity: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="envelope-container" id="env" onclick="openMe()">
+        <div class="heart-seal">❤️</div>
+        <div class="envelope"></div>
+        
+        <div class="card">
+            <div class="card-content">
+                <div class="line">Для кохання всього мого життя:</div>
+                <div class="line">Якби я міг обрати безпечне плече,</div>
+                <div class="line">я б завжди обирав бути поруч з тобою.</div>
+                <div class="line">Чим більше часу я проводжу з тобою,</div>
+                <div class="line">тим сильніше я тебе кохаю.</div>
+                <div class="line" style="color: var(--accent); font-weight: bold; margin-top: 5px;">Я кохаю тебе! ❤️</div>
+
+                <div style="position: relative;">
+                    <svg id="tree-svg" viewBox="0 0 200 200">
+                        <path class="branch" d="M100,190 Q100,150 100,130" style="stroke-width: 9;"/>
+                        <path class="branch" d="M100,150 Q80,140 65,110" style="animation-delay: 0.2s;"/>
+                        <path class="branch" d="M100,150 Q120,140 135,110" style="animation-delay: 0.2s;"/>
+                        <path class="branch" d="M100,130 Q85,110 75,80" style="animation-delay: 0.4s;"/>
+                        <path class="branch" d="M100,130 Q115,110 125,80" style="animation-delay: 0.4s;"/>
+                        <path class="branch" d="M100,110 Q100,80 100,50" style="animation-delay: 0.6s;"/>
+                    </svg>
+                    <div id="heart-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+                </div>
+
+                <div class="timer-display">
+                    <span style="font-size: 0.7rem; font-weight: normal; color: #666;">Ми разом вже:</span><br>
+                    <span id="timer">000 dias 00:00:00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const startDate = new Date('2025-04-21T08:07:16');
+        let isOpened = false;
+
+        function openMe() {
+            if(isOpened) return;
+            isOpened = true;
+            document.getElementById('env').classList.add('open');
+
+            setTimeout(() => {
+                const lines = document.querySelectorAll('.line');
+                lines.forEach((l, i) => {
+                    setTimeout(() => l.classList.add('animate-text'), i * 800);
+                });
+                setTimeout(growHearts, 1000);
+            }, 1200);
+
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+
+        function growHearts() {
+            const container = document.getElementById('heart-container');
+            const warmColors = [
+                '#FF0000', '#FF4500', '#FF8C00', '#FFA500', 
+                '#FFD700', '#D80000', '#FF2400', '#E25822', '#B91D1D'
+            ];
+            
+            for (let i = 0; i < 800; i++) {
+                setTimeout(() => {
+                    // Використовуємо квадратний корінь для рівномірного розподілу площі
+                    const t = Math.random() * Math.PI * 2;
+                    const r = Math.sqrt(Math.random()); // Магія рівномірності тут
+                    
+                    // Параметрична формула серця
+                    const x = 16 * Math.pow(Math.sin(t), 3);
+                    const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                    
+                    // Множимо на r, щоб заповнити середину без перенасичення центру
+                    const finalScale = 5.8 * r; 
+                    const posX = 154 + x * finalScale; 
+                    const posY = 120 + y * finalScale;
+
+                    const h = document.createElement('div');
+                    h.className = 'heart-leaf';
+                    
+                    const color = warmColors[Math.floor(Math.random() * warmColors.length)];
+                    h.innerHTML = `
+                        <svg width="100%" height="100%" viewBox="0 0 32 32">
+                            <path fill="${color}" d="M16,28.261c0,0-14-7.926-14-17.046c0-9.356,13.159-10.399,14,0.454
+                            c0.841-10.853,14-9.81,14-0.454C30,20.335,16,28.261,16,28.261z"/>
+                        </svg>
+                    `;
+
+                    const size = Math.random() * 6 + 10;
+                    h.style.width = size + 'px';
+                    h.style.height = size + 'px';
+                    h.style.left = posX + 'px';
+                    h.style.top = posY + 'px';
+                    h.style.filter = "drop-shadow(0px 0px 1px rgba(0,0,0,0.1))";
+                    
+                    container.appendChild(h);
+                }, i * 12);
+            }
+        }
+
+        function updateTimer() {
+            const now = new Date();
+            const diff = now - startDate;
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const m = Math.floor((diff / 1000 / 60) % 60);
+            const s = Math.floor((diff / 1000) % 60);
+
+            document.getElementById('timer').innerText = 
+                `${d} dias ${String(h).padStart(2,'0')} год ${String(m).padStart(2,'0')} хв ${String(s).padStart(2,'0')} сек`;
+        }
+    </script>
+</body>
+</html>
